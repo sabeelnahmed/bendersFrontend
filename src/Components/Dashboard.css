@@ -1,0 +1,1019 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+/* Main Dashboard Page Container */
+.dashboard-page {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: #000000;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 20px 40px 20px;
+}
+
+/* Sophisticated Background with Radial Gradients */
+.dashboard-page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 20%, rgba(208, 93, 29, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(224, 104, 32, 0.06) 0%, transparent 50%),
+              radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
+  animation: dashboardBackgroundShift 20s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes dashboardBackgroundShift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(2%, 2%) scale(1.02);
+  }
+}
+
+/* Subtle Grid Pattern */
+.dashboard-page::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Logo Section - Refined */
+.dashboard-logo-section-top {
+  position: fixed;
+  top: 40px;
+  left: 40px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 1000;
+  opacity: 0;
+  animation: dashboardFadeInSlide 0.8s ease-out 0.2s forwards;
+}
+
+@keyframes dashboardFadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-logo-image {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+.dashboard-logo-text {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-logo-text-span {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  font-size: 19px;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+}
+
+/* Profile Section - Apple-inspired */
+.dashboard-profile-section-top {
+  position: fixed;
+  top: 40px;
+  right: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 1000;
+  opacity: 0;
+  animation: dashboardFadeInSlide 0.8s ease-out 0.3s forwards;
+}
+
+.dashboard-profile-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 14px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  user-select: none;
+}
+
+.dashboard-profile-info:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-profile-info:active {
+  transform: scale(0.98);
+}
+
+.dashboard-profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d05d1d 0%, #e87332 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(208, 93, 29, 0.3),
+              inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.dashboard-profile-name {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.1px;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-profile-chevron {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 2px;
+}
+
+/* Profile Dropdown Menu */
+.dashboard-profile-dropdown {
+  min-width: 200px;
+  background: rgba(28, 28, 28, 0.95);
+  backdrop-filter: blur(60px) saturate(160%);
+  -webkit-backdrop-filter: blur(60px) saturate(160%);
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.56),
+              0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+  animation: dashboardDropdownSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top right;
+}
+
+@keyframes dashboardDropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dashboard-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.1px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.dashboard-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.dashboard-dropdown-item:active {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(0.98);
+}
+
+.dashboard-dropdown-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  opacity: 0.9;
+}
+
+.dashboard-dropdown-divider {
+  height: 0.5px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 6px 8px;
+}
+
+.dashboard-dropdown-item-logout {
+  color: rgba(255, 100, 100, 0.95);
+}
+
+.dashboard-dropdown-item-logout:hover {
+  background: rgba(255, 100, 100, 0.12);
+  color: rgba(255, 100, 100, 1);
+}
+
+.dashboard-dropdown-item-logout:active {
+  background: rgba(255, 100, 100, 0.18);
+}
+
+/* Main Content Container - Premium Card */
+.dashboard-content-wrapper {
+  position: relative;
+  width: 92%;
+  max-width: 1280px;
+  max-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  padding: 56px;
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(60px) saturate(160%);
+  -webkit-backdrop-filter: blur(60px) saturate(160%);
+  border-radius: 24px;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.48),
+              0 0 0 0.5px rgba(255, 255, 255, 0.08) inset,
+              0 1px 2px rgba(255, 255, 255, 0.06) inset;
+  overflow: hidden;
+  opacity: 0;
+  animation: dashboardContentFadeIn 1s ease-out 0.4s forwards;
+}
+
+@keyframes dashboardContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header Section - Clean Typography */
+.dashboard-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 48px;
+  flex-shrink: 0;
+}
+
+.dashboard-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-page-title {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  font-size: 40px;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -1.2px;
+  line-height: 1.1;
+}
+
+.dashboard-page-subtitle {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+/* Premium Button Design */
+.dashboard-create-project-btn {
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #d05d1d 0%, #e87332 100%);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(208, 93, 29, 0.35),
+              0 1px 2px rgba(0, 0, 0, 0.2),
+              inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.dashboard-create-project-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #e87332 0%, #f28a4a 100%);
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-create-project-btn:hover::before {
+  opacity: 1;
+}
+
+.dashboard-create-project-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(208, 93, 29, 0.45),
+              0 2px 4px rgba(0, 0, 0, 0.2),
+              inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.dashboard-create-project-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(208, 93, 29, 0.4);
+}
+
+.dashboard-create-project-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-plus-icon {
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 400;
+}
+
+/* Projects Container - Smooth Scroll */
+.dashboard-projects-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 12px;
+  margin-right: -12px;
+}
+
+/* Refined Scrollbar */
+.dashboard-projects-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-projects-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.dashboard-projects-container::-webkit-scrollbar-thumb {
+  background: rgba(208, 93, 29, 0.3);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.dashboard-projects-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(208, 93, 29, 0.5);
+}
+
+/* Loading State - Elegant */
+.dashboard-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: white;
+}
+
+.dashboard-spinner {
+  width: 44px;
+  height: 44px;
+  border: 2.5px solid rgba(255, 255, 255, 0.08);
+  border-top-color: #e87332;
+  border-radius: 50%;
+  animation: dashboardSpin 0.8s linear infinite;
+  margin-bottom: 24px;
+}
+
+@keyframes dashboardSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dashboard-loading-state p {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: -0.1px;
+}
+
+/* Empty State - Minimalist */
+.dashboard-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.dashboard-empty-icon {
+  font-size: 64px;
+  margin-bottom: 28px;
+  opacity: 0.4;
+  filter: grayscale(50%);
+}
+
+.dashboard-empty-state h2 {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  font-size: 28px;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.6px;
+}
+
+.dashboard-empty-state p {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 36px 0;
+  letter-spacing: -0.1px;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.dashboard-create-first-project-btn {
+  padding: 14px 36px;
+  background: linear-gradient(135deg, #d05d1d 0%, #e87332 100%);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(208, 93, 29, 0.35),
+              inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-create-first-project-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #e87332 0%, #f28a4a 100%);
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-create-first-project-btn:hover::before {
+  opacity: 1;
+}
+
+.dashboard-create-first-project-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(208, 93, 29, 0.45);
+}
+
+.dashboard-create-first-project-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* Projects Grid - Perfect Spacing */
+.dashboard-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+  padding-bottom: 24px;
+}
+
+/* Project Card - Premium Material */
+.dashboard-project-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 32px;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.28, 0.11, 0.32, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-project-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.02) 0%, rgba(249, 115, 22, 0.01) 100%);
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.28, 0.11, 0.32, 1);
+  z-index: 0;
+}
+
+.dashboard-project-card:hover::before {
+  opacity: 1;
+}
+
+.dashboard-project-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(249, 115, 22, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
+              0 0 0 0.5px rgba(249, 115, 22, 0.08) inset,
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dashboard-project-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  transition: all 0.5s cubic-bezier(0.28, 0.11, 0.32, 1);
+  color: rgba(249, 115, 22, 0.6);
+}
+
+.dashboard-project-card:hover .dashboard-project-icon {
+  background: rgba(249, 115, 22, 0.04);
+  border-color: rgba(249, 115, 22, 0.1);
+  color: rgba(249, 115, 22, 0.85);
+}
+
+.dashboard-project-name {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+  letter-spacing: -0.4px;
+}
+
+.dashboard-project-description {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  margin: 0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 44px;
+  position: relative;
+  z-index: 1;
+  letter-spacing: -0.1px;
+}
+
+.dashboard-project-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-project-date {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: -0.1px;
+}
+
+/* Modal - Premium Overlay */
+.dashboard-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: dashboardModalOverlayFadeIn 0.3s ease;
+}
+
+@keyframes dashboardModalOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dashboard-modal-content {
+  position: relative;
+  width: 92%;
+  max-width: 560px;
+  background: rgba(28, 28, 28, 0.95);
+  backdrop-filter: blur(60px) saturate(160%);
+  -webkit-backdrop-filter: blur(60px) saturate(160%);
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.56),
+              0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+  animation: dashboardModalContentSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes dashboardModalContentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dashboard-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 36px 24px;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-modal-header h2 {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.6px;
+}
+
+.dashboard-modal-close {
+  background: rgba(255, 255, 255, 0.06);
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1;
+  padding: 0;
+}
+
+.dashboard-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.dashboard-modal-body {
+  padding: 32px 36px;
+}
+
+.dashboard-form-group {
+  margin-bottom: 28px;
+}
+
+.dashboard-form-group:last-child {
+  margin-bottom: 0;
+}
+
+.dashboard-form-group label {
+  display: block;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 10px;
+  letter-spacing: -0.1px;
+}
+
+.dashboard-form-group input,
+.dashboard-form-group textarea {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  outline: none;
+  color: #ffffff;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.1px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-form-group input:focus,
+.dashboard-form-group textarea:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(208, 93, 29, 0.5);
+  box-shadow: 0 0 0 4px rgba(208, 93, 29, 0.08),
+              inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-form-group input::placeholder,
+.dashboard-form-group textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.dashboard-form-group textarea {
+  resize: vertical;
+  min-height: 108px;
+  line-height: 1.6;
+}
+
+.dashboard-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px 36px 32px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-btn-cancel,
+.dashboard-btn-create {
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-btn-cancel {
+  background: rgba(255, 255, 255, 0.06);
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.dashboard-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.dashboard-btn-create {
+  background: linear-gradient(135deg, #d05d1d 0%, #e87332 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(208, 93, 29, 0.35),
+              inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.dashboard-btn-create::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #e87332 0%, #f28a4a 100%);
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-btn-create:hover::before {
+  opacity: 1;
+}
+
+.dashboard-btn-create:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(208, 93, 29, 0.45);
+}
+
+.dashboard-btn-create span,
+.dashboard-btn-cancel span {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-btn-cancel:disabled,
+.dashboard-btn-create:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Error Banner */
+.dashboard-error-banner {
+  padding: 16px 20px;
+  background: rgba(220, 38, 38, 0.12);
+  border: 0.5px solid rgba(220, 38, 38, 0.3);
+  border-radius: 12px;
+  color: rgba(252, 165, 165, 0.95);
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 28px;
+  flex-shrink: 0;
+  letter-spacing: -0.1px;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.08);
+}
+
+/* Responsive Design */
+@media (max-width: 1280px) {
+  .dashboard-projects-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .dashboard-content-wrapper {
+    padding: 48px;
+  }
+
+  .dashboard-projects-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+  }
+
+  .dashboard-page-title {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-page {
+    padding: 100px 16px 32px 16px;
+  }
+
+  .dashboard-logo-section-top,
+  .dashboard-profile-section-top {
+    top: 28px;
+  }
+
+  .dashboard-logo-section-top {
+    left: 28px;
+  }
+
+  .dashboard-profile-section-top {
+    right: 28px;
+  }
+
+  .dashboard-profile-dropdown {
+    min-width: 180px;
+  }
+
+  .dashboard-content-wrapper {
+    width: 94%;
+    padding: 40px 32px;
+    max-height: calc(100vh - 140px);
+  }
+
+  .dashboard-header-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+
+  .dashboard-page-title {
+    font-size: 32px;
+    letter-spacing: -0.8px;
+  }
+
+  .dashboard-projects-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dashboard-modal-header,
+  .dashboard-modal-body,
+  .dashboard-modal-footer {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-page {
+    padding: 90px 12px 24px 12px;
+  }
+
+  .dashboard-logo-section-top,
+  .dashboard-profile-section-top {
+    top: 20px;
+  }
+
+  .dashboard-logo-section-top {
+    left: 20px;
+  }
+
+  .dashboard-profile-section-top {
+    right: 20px;
+  }
+
+  .dashboard-page-title {
+    font-size: 28px;
+    letter-spacing: -0.6px;
+  }
+
+  .dashboard-page-subtitle {
+    font-size: 14px;
+  }
+
+  .dashboard-content-wrapper {
+    padding: 32px 24px;
+    max-height: calc(100vh - 130px);
+  }
+
+  .dashboard-project-card {
+    padding: 24px;
+  }
+
+  .dashboard-create-project-btn,
+  .dashboard-create-first-project-btn {
+    padding: 11px 24px;
+    font-size: 13px;
+  }
+
+  .dashboard-modal-content {
+    width: 94%;
+  }
+
+  .dashboard-modal-header,
+  .dashboard-modal-body,
+  .dashboard-modal-footer {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}

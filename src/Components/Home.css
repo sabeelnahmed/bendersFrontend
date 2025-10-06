@@ -1,0 +1,264 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+.home-container {
+  background: linear-gradient(135deg, #000000 0%, #0a0a0a 100%);
+  color: #f5f5f7;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Segoe UI', sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Subtle background texture */
+.home-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.03) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(249, 115, 22, 0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.home-header {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background: rgba(15, 15, 15, 0.7);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+  gap: 32px;
+  position: relative;
+  z-index: 100;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.home-content {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 72px);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.home-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: transparent;
+}
+
+/* Premium scrollbar styles */
+.home-main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.home-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.home-main::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.home-main::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Active Navigation Display */
+.active-nav-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  border-radius: 10px;
+  background: rgba(249, 115, 22, 0.05);
+  border: 0.5px solid rgba(249, 115, 22, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.active-nav-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #F97316;
+  letter-spacing: -0.2px;
+  text-align: center;
+}
+
+/* Profile Section - Refined Apple Style */
+.profile-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px 6px 6px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.4s cubic-bezier(0.28, 0.11, 0.32, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.04) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.28, 0.11, 0.32, 1);
+}
+
+.profile-section:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 
+              0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
+}
+
+.profile-section:hover::before {
+  opacity: 1;
+}
+
+.profile-section:active {
+  transform: scale(0.98);
+}
+
+.profile-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #f5f5f7;
+  letter-spacing: -0.2px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  z-index: 1;
+}
+
+.profile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F97316 0%, #ea580c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.4s cubic-bezier(0.28, 0.11, 0.32, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.profile-section:hover .profile-avatar {
+  box-shadow: 0 3px 10px rgba(249, 115, 22, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* Header Left Section */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+}
+
+/* Ultra-minimalistic Back Button - Johnny Ive Approved */
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.28, 0.11, 0.32, 1);
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.back-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.28, 0.11, 0.32, 1);
+}
+
+.back-btn:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.back-btn:hover::before {
+  opacity: 1;
+}
+
+.back-btn:active {
+  transform: scale(0.96);
+}
+
+.back-btn svg {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.4s cubic-bezier(0.28, 0.11, 0.32, 1);
+}
+
+.back-btn:hover svg {
+  transform: translateX(-0.5px);
+}
+
+/* Project Name Container - Clean and Minimal */
+.project-name-container {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 0 20px;
+}
+
+.current-project-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #f5f5f7;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+  opacity: 0.85;
+  transition: opacity 0.3s ease;
+}
