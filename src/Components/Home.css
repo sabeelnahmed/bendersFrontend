@@ -190,27 +190,25 @@
   align-items: center;
   gap: 24px;
   flex: 1;
+  justify-content: flex-start;  /* Added this */
 }
 
 /* Ultra-minimalistic Back Button - Johnny Ive Approved */
-.back-btn {
+/* Clickable Logo Container */
+.logo-back-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.4);
-  border: none;
-  border-radius: 10px;
   cursor: pointer;
+  padding: 6px 8px;  /* Reduced horizontal padding from 12px to 8px */
+  margin-left: -8px;  /* Pull it further left to compensate for padding */
+  border-radius: 10px;
+  background: transparent;
   transition: all 0.4s cubic-bezier(0.28, 0.11, 0.32, 1);
-  padding: 0;
   position: relative;
   overflow: hidden;
 }
 
-.back-btn::before {
+.logo-back-btn::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -220,27 +218,34 @@
   transition: opacity 0.4s cubic-bezier(0.28, 0.11, 0.32, 1);
 }
 
-.back-btn:hover {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.back-btn:hover::before {
+.logo-back-btn:hover::before {
   opacity: 1;
 }
 
-.back-btn:active {
-  transform: scale(0.96);
+
+.logo-back-btn:active {
+  transform: scale(0.98);
 }
 
-.back-btn svg {
-  position: relative;
-  z-index: 1;
-  transition: transform 0.4s cubic-bezier(0.28, 0.11, 0.32, 1);
+/* Scale down the logo */
+.logo-back-btn svg {
+  width: 145px;
+  height: auto;
+  transition: opacity 0.3s ease;
 }
 
-.back-btn:hover svg {
-  transform: translateX(-0.5px);
+.logo-back-btn:hover svg {
+  opacity: 0.85;
 }
+
+/* Update project name positioning */
+.project-name-container {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  margin-left: 0;
+}
+
 
 /* Project Name Container - Clean and Minimal */
 .project-name-container {

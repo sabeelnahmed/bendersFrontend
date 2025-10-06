@@ -90,24 +90,23 @@ export default function Home() {
       <header className="home-header">
         <div className="header-left">
           {currentProject && (
-            <button 
-              className="back-btn" 
+            <div 
+              className="logo-back-btn" 
               onClick={() => navigate('/dashboard')}
               title="Back to Dashboard"
               aria-label="Back to Dashboard"
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+              <CodebendersLogo />
+            </div>
           )}
-          <CodebendersLogo />
+          {!currentProject && <CodebendersLogo />}
           {currentProject && (
             <div className="project-name-container">
               <span className="current-project-name">{currentProject.name}</span>
             </div>
           )}
         </div>
+
         {user && (
           <div className="profile-section">
             <div className="profile-avatar">
