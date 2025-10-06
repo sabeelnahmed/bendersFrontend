@@ -65,7 +65,7 @@ export default function Home() {
       case 'Business Logic Editor':
         return <BusinessLogicEditor />;
       case 'Brand Design':
-        return <BrandDesign />;
+        return <BrandDesign onNavigateNext={() => setActiveNav('3rd Party API')} />;
       case '3rd Party API':
         return <ThirdPartyAPI />;
       case 'Code Generation':
