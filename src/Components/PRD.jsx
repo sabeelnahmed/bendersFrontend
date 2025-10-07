@@ -1,4 +1,10 @@
 import React from 'react';
+import { apiClient, API_ENDPOINTS } from '../Context.jsx';
+import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 // Main PRD component with Apple-inspired premium design
 export default function PRD({ onNavigateNext }) {
@@ -97,27 +103,160 @@ export default function PRD({ onNavigateNext }) {
       `}</style>
 
       <div style={styles.appContainer}>
-        <MainContent />
+        <MainContent onNavigateNext={onNavigateNext} />
       </div>
     </>
   );
 }
 
+// Text extraction utility functions
+const extractTextFromPDF = async (file) => {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items.map(item => item.str).join(' ');
+    fullText += pageText + '\n';
+  }
+
+  return fullText.trim();
+};
+
+const extractTextFromWord = async (file) => {
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  return result.value;
+};
+
+const extractTextFromTxt = async (file) => {
+  return await file.text();
+};
+
 // Main content area component
-const MainContent = () => {
+const MainContent = ({ onNavigateNext }) => {
   const fileInputRef = React.useRef(null);
   const [selectedFile, setSelectedFile] = React.useState(null);
+  const [selectedFileName, setSelectedFileName] = React.useState(null);
+  const [extractedText, setExtractedText] = React.useState('');
   const [textValue, setTextValue] = React.useState('');
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isExtracting, setIsExtracting] = React.useState(false);
+  const [error, setError] = React.useState(null);
+
+  // Fetch existing PRD on component mount
+  React.useEffect(() => {
+    const fetchPRD = async () => {
+      try {
+        // Get user_id and project_id from localStorage
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const project = JSON.parse(localStorage.getItem('currentProject') || '{}');
+
+        // Make GET request with user_id and project_id as query params
+        const response = await apiClient.get(API_ENDPOINTS.GET_PRD, {
+          params: {
+            user_id: user.id || null,
+            project_id: project.id || null,
+          },
+        });
+
+        // If text is returned, set it in the textarea
+        if (response.data && response.data.text) {
+          setTextValue(response.data.text);
+          console.log('PRD fetched successfully');
+        }
+      } catch (err) {
+        // Silently handle errors - if PRD doesn't exist, leave textarea empty
+        console.log('No existing PRD found or error fetching PRD:', err.message);
+      }
+    };
+
+    fetchPRD();
+  }, []); // Empty dependency array means this runs once on mount
 
   const handleUploadClick = () => {
     fileInputRef.current.click();
   };
   
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      setSelectedFile(file.name);
-      console.log("Selected file:", file.name);
+    if (!file) return;
+
+    setSelectedFile(file);
+    setSelectedFileName(file.name);
+    setError(null);
+    setIsExtracting(true);
+
+    try {
+      let extractedContent = '';
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+
+      if (fileExtension === 'pdf') {
+        extractedContent = await extractTextFromPDF(file);
+      } else if (fileExtension === 'docx' || fileExtension === 'doc') {
+        extractedContent = await extractTextFromWord(file);
+      } else if (fileExtension === 'txt') {
+        extractedContent = await extractTextFromTxt(file);
+      } else {
+        throw new Error('Unsupported file format. Please upload PDF, Word, or TXT files.');
+      }
+
+      setExtractedText(extractedContent);
+      console.log("Extracted text from file:", file.name);
+    } catch (err) {
+      console.error('Error extracting text from file:', err);
+      setError(err.message || 'Failed to extract text from file. Please try again.');
+      setSelectedFile(null);
+      setSelectedFileName(null);
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleSubmitPRD = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Combine textarea text and extracted file text
+      let combinedText = '';
+      
+      if (textValue.trim()) {
+        combinedText = textValue.trim();
+      }
+      
+      if (extractedText.trim()) {
+        if (combinedText) {
+          combinedText += '\n\n--- Content from uploaded file ---\n\n';
+        }
+        combinedText += extractedText.trim();
+      }
+
+      // Get user_id and project_id from localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const project = JSON.parse(localStorage.getItem('currentProject') || '{}');
+
+      // Send combined text to backend with user_id and project_id
+      const response = await apiClient.post(API_ENDPOINTS.UPLOAD_PRD, {
+        text: combinedText,
+        source: selectedFileName ? `file: ${selectedFileName}` : 'textarea',
+        user_id: user.id || null,
+        project_id: project.id || null,
+      });
+
+      console.log('PRD uploaded successfully:', response.data);
+      
+      // Navigate to next step on success
+      if (onNavigateNext) {
+        onNavigateNext();
+      }
+    } catch (err) {
+      console.error('Error uploading PRD:', err);
+      setError(err.response?.data?.message || 'Failed to upload PRD. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -137,20 +276,43 @@ const MainContent = () => {
               onChange={(e) => setTextValue(e.target.value)}
             />
 
-            {selectedFile && (
+            {selectedFileName && (
               <div className="prd-selected-file" style={styles.selectedFileTag}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{flexShrink: 0, opacity: 0.7}}>
-                  <path d="M8 2L8 10M8 2L5 5M8 2L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M3 11V12C3 12.5304 3.21071 13.0391 3.58579 13.4142C3.96086 13.7893 4.46957 14 5 14H11C11.5304 14 12.0391 13.893 12.4142 13.4142C12.7893 13.0391 13 12.5304 13 12V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                {isExtracting ? (
+                  <>
+                    <LoadingSpinner />
+                    <span style={styles.fileName}>Extracting text from {selectedFileName}...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{flexShrink: 0, opacity: 0.7}}>
+                      <path d="M8 2L8 10M8 2L5 5M8 2L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M3 11V12C3 12.5304 3.21071 13.0391 3.58579 13.4142C3.96086 13.7893 4.46957 14 5 14H11C11.5304 14 12.0391 13.893 12.4142 13.4142C12.7893 13.0391 13 12.5304 13 12V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    <span style={styles.fileName}>{selectedFileName}</span>
+                    <button 
+                      style={styles.removeFileBtn}
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setSelectedFileName(null);
+                        setExtractedText('');
+                      }}
+                      aria-label="Remove file"
+                    >
+                      ×
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {error && (
+              <div style={styles.errorMessage}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{flexShrink: 0}}>
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M8 4V8M8 11V11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                <span style={styles.fileName}>{selectedFile}</span>
-                <button 
-                  style={styles.removeFileBtn}
-                  onClick={() => setSelectedFile(null)}
-                  aria-label="Remove file"
-                >
-                  ×
-                </button>
+                <span>{error}</span>
               </div>
             )}
 
@@ -175,20 +337,20 @@ const MainContent = () => {
               <button 
                 className="prd-process-button" 
                 style={styles.processButton}
-                disabled={!textValue && !selectedFile}
-                onClick={() => {
-                  if (textValue || selectedFile) {
-                    // TODO: Send PRD data to backend for analysis
-                    console.log('Processing requirements:', { textValue, selectedFile });
-                    // Navigate to User Persona selection
-                    if (onNavigateNext) {
-                      onNavigateNext();
-                    }
-                  }
-                }}
+                disabled={(!textValue && !extractedText) || isLoading || isExtracting}
+                onClick={handleSubmitPRD}
               >
-                <span>Continue</span>
-                <ArrowRightIcon />
+                {isLoading ? (
+                  <>
+                    <LoadingSpinner />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Continue</span>
+                    <ArrowRightIcon />
+                  </>
+                )}
               </button>
             </div>
         </main>
@@ -348,6 +510,20 @@ const styles = {
     transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
     boxShadow: '0 4px 12px rgba(232, 115, 50, 0.25)',
   },
+  errorMessage: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '12px 16px',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    border: '1px solid rgba(239, 68, 68, 0.3)',
+    borderRadius: '8px',
+    color: '#ef4444',
+    fontSize: '14px',
+    fontWeight: '500',
+    marginTop: '8px',
+    alignSelf: 'stretch',
+  },
 };
 
 // SVG Icons as React components - Refined
@@ -361,6 +537,37 @@ const UploadFileIcon = () => (
 const ArrowRightIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M3 9H15M15 9L10 4M15 9L10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const LoadingSpinner = () => (
+  <svg 
+    width="18" 
+    height="18" 
+    viewBox="0 0 18 18" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    style={{
+      animation: 'spin 1s linear infinite',
+    }}
+  >
+    <style>{`
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `}</style>
+    <circle 
+      cx="9" 
+      cy="9" 
+      r="7" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round"
+      strokeDasharray="32"
+      strokeDashoffset="8"
+      opacity="0.8"
+    />
   </svg>
 );
 

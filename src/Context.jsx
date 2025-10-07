@@ -78,6 +78,21 @@ export const API_ENDPOINTS = {
   PROJECT_BY_ID: (projectId) => `/api/v1/projects/${projectId}`,
   PROJECT_STATS: (projectId) => `/api/v1/projects/${projectId}/stats`,
   
+  // PRD Upload
+  UPLOAD_PRD: '/api/upload_prd',
+  GET_PRD: '/api/get_prd',
+  
+  // User Personas
+  GET_USER_PERSONAS: '/api/get_userpersonas',
+  UPLOAD_USER_PERSONAS: '/api/upload_userpersonas',
+  
+  // Brand Design
+  GET_BRAND_DESIGN: '/api/get_branddesign',
+  UPLOAD_BRAND_DESIGN: '/api/upload_branddesign',
+  
+  // Third Party APIs
+  GET_THIRD_PARTY: '/api/get_thirdparty',
+  
   // Health Check
   HEALTH: '/api/v1/health',
   AUTH_HEALTH: '/api/v1/auth/health',

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiClient, API_ENDPOINTS } from '../Context.jsx';
 
 // Main Persona component with Apple-inspired premium design
 export default function UserPersona({ onNavigateNext }) {
@@ -6,49 +7,45 @@ export default function UserPersona({ onNavigateNext }) {
   const [selectedPersonas, setSelectedPersonas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showLimitWarning, setShowLimitWarning] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEmpty, setIsEmpty] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    // Simulate fetching personas from backend
-    setTimeout(() => {
-      // Mock persona data from backend analysis
-      const mockPersonas = [
-        {
-          id: 'persona-1',
-          name: 'System Administrator',
-          description: 'Manages user accounts, system configurations, and monitors platform health. Requires comprehensive dashboard with admin controls.',
-          goals: ['Efficient user management', 'System monitoring', 'Access control'],
-          painPoints: ['Complex configuration processes', 'Limited visibility into system health'],
-          keyFeatures: ['User management dashboard', 'System analytics', 'Role-based access control']
-        },
-        {
-          id: 'persona-2',
-          name: 'Business Analyst',
-          description: 'Analyzes business data, generates reports, and makes data-driven decisions. Needs intuitive analytics and reporting tools.',
-          goals: ['Data visualization', 'Report generation', 'Trend analysis'],
-          painPoints: ['Difficulty in accessing real-time data', 'Complex reporting interfaces'],
-          keyFeatures: ['Interactive dashboards', 'Custom report builder', 'Data export capabilities']
-        },
-        {
-          id: 'persona-3',
-          name: 'End User/Customer',
-          description: 'Primary user of the application who interacts with core features. Expects simple, intuitive interface with quick task completion.',
-          goals: ['Quick task completion', 'Easy navigation', 'Reliable service'],
-          painPoints: ['Complicated workflows', 'Slow response times'],
-          keyFeatures: ['Streamlined workflows', 'Quick actions', 'Responsive interface']
-        },
-        {
-          id: 'persona-4',
-          name: 'Developer/Technical User',
-          description: 'Integrates systems, manages APIs, and customizes functionality. Requires technical documentation and developer tools.',
-          goals: ['API integration', 'System customization', 'Technical documentation'],
-          painPoints: ['Poor API documentation', 'Limited customization options'],
-          keyFeatures: ['API documentation', 'Developer console', 'Webhook management']
+    const fetchPersonas = async () => {
+      try {
+        // Get user_id and project_id from localStorage
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const project = JSON.parse(localStorage.getItem('currentProject') || '{}');
+
+        // Make GET request with user_id and project_id as query params
+        const response = await apiClient.get(API_ENDPOINTS.GET_USER_PERSONAS, {
+          params: {
+            user_id: user.id || null,
+            project_id: project.id || null,
+          },
+        });
+
+        // Check if response has personas
+        if (response.data && response.data.success) {
+          if (response.data.personas && response.data.personas.length > 0) {
+            setPersonas(response.data.personas);
+            setIsEmpty(false);
+          } else {
+            // Empty response - no personas found
+            setIsEmpty(true);
+          }
         }
-      ];
-      
-      setPersonas(mockPersonas);
-      setLoading(false);
-    }, 800);
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching user personas:', err);
+        setError(err.response?.data?.detail || err.message || 'Failed to fetch user personas');
+        setLoading(false);
+      }
+    };
+
+    fetchPersonas();
   }, []);
 
   const handlePersonaSelect = (personaId) => {
@@ -73,18 +70,41 @@ export default function UserPersona({ onNavigateNext }) {
     });
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedPersonas.length === 0) {
       alert('Please select at least one persona to continue');
       return;
     }
 
-    // Send selected personas to backend
-    console.log('Selected personas:', selectedPersonas);
-    
-    // Navigate to Business Logic Editor
-    if (onNavigateNext) {
-      onNavigateNext();
+    try {
+      setIsUploading(true);
+      
+      // Get user_id and project_id from localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const project = JSON.parse(localStorage.getItem('currentProject') || '{}');
+
+      // Get the full persona objects for the selected persona IDs
+      const selectedPersonaObjects = personas.filter(persona => 
+        selectedPersonas.includes(persona.id)
+      );
+
+      // Send selected personas to backend
+      const response = await apiClient.post(API_ENDPOINTS.UPLOAD_USER_PERSONAS, {
+        selected_personas: selectedPersonaObjects,
+        user_id: user.id || null,
+        project_id: project.id || null,
+      });
+
+      console.log('Selected personas uploaded successfully:', response.data);
+      
+      // Navigate to Business Logic Editor on success
+      if (onNavigateNext) {
+        onNavigateNext();
+      }
+    } catch (err) {
+      console.error('Error uploading personas:', err);
+      setError(err.response?.data?.detail || err.message || 'Failed to save selected personas');
+      setIsUploading(false);
     }
   };
 
@@ -97,6 +117,59 @@ export default function UserPersona({ onNavigateNext }) {
             <div style={styles.loadingContainer}>
               <div className="persona-spinner" style={styles.spinner}></div>
               <p style={styles.loadingText}>Analyzing PRD and identifying user personas...</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <>
+        <style>{styles.cssStyles}</style>
+        <div style={styles.appContainer}>
+          <div style={styles.mainContentContainer}>
+            <div style={styles.errorContainer}>
+              <div style={styles.errorIcon}>⚠️</div>
+              <h2 style={styles.errorTitle}>Error Loading User Personas</h2>
+              <p style={styles.errorText}>{error}</p>
+              <button
+                className="persona-retry-button"
+                style={styles.retryButton}
+                onClick={() => window.location.reload()}
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Empty state - no personas found
+  if (isEmpty) {
+    return (
+      <>
+        <style>{styles.cssStyles}</style>
+        <div style={styles.appContainer}>
+          <div style={styles.mainContentContainer}>
+            <div style={styles.emptyContainer}>
+              <div style={styles.emptyIcon}>
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M6 20C6 16.6863 8.68629 14 12 14C15.3137 14 18 16.6863 18 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <h2 style={styles.emptyTitle}>No User Personas Found</h2>
+              <p style={styles.emptyText}>
+                Upload your requirements and start the process to generate user personas for your project.
+              </p>
+              <p style={styles.emptyHint}>
+                Navigate to the PRD section to upload your project requirements document.
+              </p>
             </div>
           </div>
         </div>
@@ -162,13 +235,22 @@ export default function UserPersona({ onNavigateNext }) {
                   className="persona-continue-button"
                   style={{
                     ...styles.continueButton,
-                    ...(selectedPersonas.length === 0 ? styles.continueButtonDisabled : {})
+                    ...(selectedPersonas.length === 0 || isUploading ? styles.continueButtonDisabled : {})
                   }}
                   onClick={handleContinue}
-                  disabled={selectedPersonas.length === 0}
+                  disabled={selectedPersonas.length === 0 || isUploading}
                 >
-                  <span>Continue</span>
-                  <ArrowRightIcon />
+                  {isUploading ? (
+                    <>
+                      <div className="persona-spinner" style={{...styles.spinner, marginBottom: 0, width: '18px', height: '18px', borderWidth: '2px'}}></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Continue</span>
+                      <ArrowRightIcon />
+                    </>
+                  )}
                 </button>
               </div>
             </main>
@@ -351,6 +433,18 @@ const styles = {
     /* Spinner Animation */
     .persona-spinner {
       animation: personaSpin 0.8s linear infinite;
+    }
+
+    /* Retry Button Hover */
+    .persona-retry-button:hover {
+      background: linear-gradient(135deg, #e87332 0%, #f28a4a 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(208, 93, 29, 0.5);
+    }
+
+    .persona-retry-button:active {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(208, 93, 29, 0.4);
     }
   `,
 
@@ -656,5 +750,111 @@ const styles = {
     letterSpacing: '-0.2px',
     textAlign: 'center',
     margin: 0,
+  },
+
+  // Error State
+  errorContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '80px 20px',
+    textAlign: 'center',
+  },
+
+  errorIcon: {
+    fontSize: '64px',
+    marginBottom: '24px',
+  },
+
+  errorTitle: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '28px',
+    fontWeight: '600',
+    color: '#ffffff',
+    margin: '0 0 16px 0',
+    letterSpacing: '-0.4px',
+  },
+
+  errorText: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '16px',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.65)',
+    margin: '0 0 32px 0',
+    maxWidth: '500px',
+    lineHeight: '1.6',
+  },
+
+  retryButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '14px 36px',
+    background: 'linear-gradient(135deg, #d05d1d 0%, #e87332 100%)',
+    border: 'none',
+    borderRadius: '12px',
+    color: '#ffffff',
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '15px',
+    fontWeight: '600',
+    letterSpacing: '-0.3px',
+    cursor: 'pointer',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: '0 4px 16px rgba(208, 93, 29, 0.4)',
+  },
+
+  // Empty State
+  emptyContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '80px 20px',
+    textAlign: 'center',
+  },
+
+  emptyIcon: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '20px',
+    background: 'rgba(255, 255, 255, 0.03)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '0.5px solid rgba(255, 255, 255, 0.06)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'rgba(232, 115, 50, 0.6)',
+    marginBottom: '32px',
+  },
+
+  emptyTitle: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '28px',
+    fontWeight: '600',
+    color: '#ffffff',
+    margin: '0 0 16px 0',
+    letterSpacing: '-0.4px',
+  },
+
+  emptyText: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '16px',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.65)',
+    margin: '0 0 12px 0',
+    maxWidth: '500px',
+    lineHeight: '1.6',
+  },
+
+  emptyHint: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '14px',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.5)',
+    margin: 0,
+    maxWidth: '450px',
+    lineHeight: '1.5',
   },
 };

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {ConfigureIcon, DesignPreviewIcon, Largefileupload, Brandguidelines } from '../icons.jsx';
+import { brandService } from '../api/brandService.js';
  
  
 // --- ICONS ---
@@ -173,14 +174,17 @@ const MainContent = ({ fileInputRef, handleLogoUploadClick, handleLogoFileChange
   const [activeTab, setActiveTab] = useState('Preview');
   const [activeVoiceAttribute, setActiveVoiceAttribute] = useState('Professional');
   const [uploadedLogo, setUploadedLogo] = useState(null);
-  const [selectedColors, setSelectedColors] = useState({
-    primary: '#D16021',
-    secondary: '#374151',
-    accent: '#6B7280',
-    background: '#1a1a1a',
-    foreground: '#ffffff'
-  });
-
+  
+  // Default colors matching the app theme (black, orange, white)
+  const defaultColors = {
+    primary: '#D16021',    // Orange
+    secondary: '#2d3748',  // Dark Charcoal
+    accent: '#6B7280',     // Gray
+    background: '#1a1a1a', // Black
+    foreground: '#ffffff'  // White
+  };
+  
+  const [selectedColors, setSelectedColors] = useState(defaultColors);
   const [brandName, setBrandName] = useState('Your Brand');
   
   const [customFonts, setCustomFonts] = useState([
@@ -217,6 +221,60 @@ const MainContent = ({ fileInputRef, handleLogoUploadClick, handleLogoFileChange
 
   const [editingField, setEditingField] = useState(null);
   const fontInputRef = React.useRef(null);
+
+  // Fetch brand design data on component mount
+  useEffect(() => {
+    const fetchBrandDesign = async () => {
+      try {
+        const response = await brandService.getBrandDesign();
+        
+        // Check if response has data (not empty)
+        if (response && Object.keys(response).length > 0) {
+          // Use data from API
+          if (response.brandName) setBrandName(response.brandName);
+          if (response.logoUrl) setUploadedLogo(response.logoUrl);
+          if (response.colors) {
+            setSelectedColors({
+              primary: response.colors.primary || defaultColors.primary,
+              secondary: response.colors.secondary || defaultColors.secondary,
+              accent: response.colors.accent || defaultColors.accent,
+              background: response.colors.background || defaultColors.background,
+              foreground: response.colors.foreground || defaultColors.foreground,
+            });
+          }
+          if (response.fontFamily) {
+            // Check if the font exists in customFonts list
+            const fontExists = customFonts.find(f => f.name === response.fontFamily);
+            if (fontExists) {
+              setSelectedFont(fontExists.id);
+            }
+          }
+          if (response.brandVoice) {
+            setEditableFields(prev => ({
+              ...prev,
+              brandVoice: response.brandVoice
+            }));
+          }
+          if (response.tone) {
+            setActiveVoiceAttribute(response.tone);
+          }
+        } else {
+          // Empty response - use default colors (black, orange, white theme with Montserrat)
+          console.log('No brand design data found. Using default theme.');
+          setSelectedColors(defaultColors);
+          setSelectedFont('montserrat');
+        }
+      } catch (error) {
+        // If API fails or returns error, use defaults
+        console.error('Error fetching brand design:', error);
+        console.log('Using default theme (black, orange, white with Montserrat).');
+        setSelectedColors(defaultColors);
+        setSelectedFont('montserrat');
+      }
+    };
+
+    fetchBrandDesign();
+  }, []); // Empty dependency array - run only on mount
 
   const handleFieldChange = (fieldName, value) => {
     setEditableFields({
@@ -279,6 +337,37 @@ const MainContent = ({ fileInputRef, handleLogoUploadClick, handleLogoFileChange
 
   const stopEditing = () => {
     setEditingField(null);
+  };
+
+  const handleContinue = async () => {
+    try {
+      // Prepare brand design data
+      const brandDesignData = {
+        brandName,
+        logoUrl: uploadedLogo,
+        colors: selectedColors,
+        fontFamily: getSelectedFontName(),
+        brandVoice: editableFields.brandVoice,
+        tone: activeVoiceAttribute,
+        // Optional: Add user_id and project_id if you have them in context
+        // user_id: userId,
+        // project_id: projectId,
+      };
+
+      // Save to backend
+      const response = await brandService.uploadBrandDesign(brandDesignData);
+      
+      console.log('✅ Brand design saved successfully:', response);
+      
+      // Navigate to next page
+      if (onNavigateNext) {
+        onNavigateNext();
+      }
+    } catch (error) {
+      console.error('❌ Failed to save brand design:', error);
+      // You can add a toast notification or error message here
+      alert('Failed to save brand design. Please try again.');
+    }
   };
 
   return (
@@ -631,7 +720,7 @@ const MainContent = ({ fileInputRef, handleLogoUploadClick, handleLogoFileChange
                 <button 
                   className="brand-continue-button" 
                   style={styles.continueButton}
-                  onClick={() => onNavigateNext && onNavigateNext()}
+                  onClick={handleContinue}
                 >
                   <span>Continue</span>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

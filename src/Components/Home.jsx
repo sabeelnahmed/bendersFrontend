@@ -17,7 +17,7 @@ import './Home.css';
 
 export default function Home() {
   const navigate = useNavigate();
-  const [activeNav, setActiveNav] = useState('Brand Design');
+  const [activeNav, setActiveNav] = useState('Requirements');
   const [user, setUser] = useState(null);
   const [currentProject, setCurrentProject] = useState(null);
 
@@ -81,7 +81,7 @@ export default function Home() {
       case 'Performance Report':
         return <PerformanceReport />;
       default:
-        return <BrandDesign />;
+        return <PRD onNavigateNext={() => setActiveNav('User Persona')} />;
     }
   };
 
