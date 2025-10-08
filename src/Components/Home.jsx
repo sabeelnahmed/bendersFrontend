@@ -7,6 +7,8 @@ import UserPersona from './UserPersona';
 import BusinessLogicEditor from './BusinessLogicEditor';
 import BrandDesign from './BrandDesign';
 import ThirdPartyAPI from './ThirdPartyAPI';
+import SpecificThirdParty from './SpecificThirdParty';
+import ThirdPartyKey from './ThirdPartyKey';
 import CodeGeneration from './CodeGeneration';
 import Preview from './Preview';
 import APIFactory from './APIFactory';
@@ -67,7 +69,11 @@ export default function Home() {
       case 'Brand Design':
         return <BrandDesign onNavigateNext={() => setActiveNav('3rd Party API')} />;
       case '3rd Party API':
-        return <ThirdPartyAPI />;
+        return <ThirdPartyAPI onNavigateNext={() => setActiveNav('Specific Third Party')} />;
+      case 'Specific Third Party':
+        return <SpecificThirdParty onNavigateNext={() => setActiveNav('Third Party Key')} />;
+      case 'Third Party Key':
+        return <ThirdPartyKey onNavigateNext={() => setActiveNav('API Factory')} />;
       case 'Code Generation':
         return <CodeGeneration />;
       case 'Preview':

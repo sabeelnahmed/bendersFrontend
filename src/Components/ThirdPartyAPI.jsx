@@ -1,61 +1,143 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient, API_ENDPOINTS } from '../Context';
 
-export default function ThirdPartyAPI() {
-  const [thirdPartyData, setThirdPartyData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+// Main ThirdPartyAPI component matching UserPersona design
+export default function ThirdPartyAPI({ onNavigateNext }) {
+  const [apis, setApis] = useState([]);
+  const [selectedApis, setSelectedApis] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastFetched, setLastFetched] = useState(null);
+  const [isEmpty, setIsEmpty] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const fetchThirdPartyAPIs = async () => {
-    setIsLoading(true);
-    setError(null);
-    
+  useEffect(() => {
+    const fetchApis = async () => {
+      try {
+        const response = await apiClient.get(API_ENDPOINTS.GET_THIRD_PARTY);
+        
+        // Check if response has APIs
+        if (response.data && response.data.apis && response.data.apis.length > 0) {
+          // Add unique IDs to each API
+          const apisWithIds = response.data.apis.map((api, index) => ({
+            ...api,
+            id: `api-${index}-${api.category}`
+          }));
+          setApis(apisWithIds);
+          setIsEmpty(false);
+        } else {
+          // Empty response - no APIs needed
+          setIsEmpty(true);
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching third-party APIs:', err);
+        setError(err.response?.data?.message || err.message || 'Failed to fetch third-party API data');
+        setLoading(false);
+      }
+    };
+
+    fetchApis();
+  }, []);
+
+  const handleApiSelect = (apiId) => {
+    setSelectedApis(prev => {
+      const isSelected = prev.includes(apiId);
+      
+      if (isSelected) {
+        // Deselect API
+        return prev.filter(id => id !== apiId);
+      } else {
+        // Select API
+        return [...prev, apiId];
+      }
+    });
+  };
+
+  const handleContinue = async () => {
+    if (selectedApis.length === 0) {
+      alert('Please select at least one third-party API to continue');
+      return;
+    }
+
     try {
-      const response = await apiClient.get(API_ENDPOINTS.GET_THIRD_PARTY);
-      setThirdPartyData(response.data);
-      setLastFetched(new Date().toLocaleString());
+      setIsUploading(true);
+      
+      // Get user_id and project_id from localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const project = JSON.parse(localStorage.getItem('currentProject') || '{}');
+
+      // Get the full API objects for the selected API IDs
+      const selectedApiObjects = apis.filter(api => 
+        selectedApis.includes(api.id)
+      );
+
+      // Send selected APIs to backend
+      const response = await apiClient.post(API_ENDPOINTS.UPLOAD_THIRD_PARTY, {
+        selected_apis: selectedApiObjects,
+        user_id: user.id || null,
+        project_id: project.id || null,
+      });
+
+      console.log('✅ Selected third-party APIs uploaded successfully');
+      console.log('📦 Full response:', response.data);
+      
+      // Store provider recommendations in localStorage for next page
+      // The recommendations are in response.data.data.apis_saved (each has providers array)
+      // OR in response.data.data.provider_recommendations
+      let recommendations = null;
+      
+      if (response.data && response.data.data) {
+        // Check for provider_recommendations first
+        if (response.data.data.provider_recommendations) {
+          recommendations = response.data.data.provider_recommendations;
+          console.log('📋 Found provider_recommendations field');
+        } 
+        // Fallback to apis_saved (which has providers embedded)
+        else if (response.data.data.apis_saved && Array.isArray(response.data.data.apis_saved)) {
+          recommendations = response.data.data.apis_saved.map(api => ({
+            api_category: api.name,
+            category: api.category,
+            description: api.description,
+            providers: api.providers || []
+          }));
+          console.log('📋 Transformed from apis_saved field');
+        }
+      }
+      
+      if (recommendations && recommendations.length > 0) {
+        console.log('📋 Provider recommendations to store:', recommendations);
+        localStorage.setItem('providerRecommendations', JSON.stringify(recommendations));
+        console.log('💾 Provider recommendations stored in localStorage');
+        
+        // Verify storage
+        const stored = localStorage.getItem('providerRecommendations');
+        console.log('✓ Verified stored data:', stored ? JSON.parse(stored) : 'NOT FOUND');
+      } else {
+        console.error('❌ No provider recommendations in response!');
+        console.log('Response data:', response.data.data);
+      }
+      
+      // Small delay to ensure localStorage is written
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Navigate to next step on success
+      if (onNavigateNext) {
+        console.log('🚀 Navigating to next step...');
+        onNavigateNext(response.data);
+      } else {
+        console.warn('⚠️ onNavigateNext callback not provided');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to fetch third-party API data');
-      console.error('Error fetching third-party APIs:', err);
+      console.error('Error uploading third-party APIs:', err);
+      setError(err.response?.data?.detail || err.message || 'Failed to save selected APIs');
     } finally {
-      setIsLoading(false);
+      // Always reset the uploading state
+      setIsUploading(false);
     }
   };
 
-  useEffect(() => {
-    fetchThirdPartyAPIs();
-  }, []);
-
-  // Map API categories to appropriate icon emojis
-  const getAPIIcon = (category) => {
-    const iconMap = {
-      'payment': '💳',
-      'maps': '🗺️',
-      'oauth': '🔐',
-      'authentication': '🔑',
-      'cloud': '☁️',
-      'database': '🗄️',
-      'email': '📧',
-      'messaging': '💬',
-      'sms': '📱',
-      'storage': '📁',
-      'default': '🔌'
-    };
-    
-    return iconMap[category?.toLowerCase()] || iconMap.default;
-  };
-
-  const isEmpty = !thirdPartyData || 
-    (Array.isArray(thirdPartyData) && thirdPartyData.length === 0) ||
-    (typeof thirdPartyData === 'object' && Object.keys(thirdPartyData).length === 0);
-
-  const apiList = Array.isArray(thirdPartyData) 
-    ? thirdPartyData 
-    : (thirdPartyData?.apis || thirdPartyData?.thirdPartyApis || []);
-
-  // Loading State
-  if (isLoading) {
+  if (loading) {
     return (
       <>
         <style>{styles.cssStyles}</style>
@@ -71,7 +153,7 @@ export default function ThirdPartyAPI() {
     );
   }
 
-  // Error State
+  // Error state
   if (error) {
     return (
       <>
@@ -79,13 +161,12 @@ export default function ThirdPartyAPI() {
         <div style={styles.appContainer}>
           <div style={styles.mainContentContainer}>
             <div style={styles.errorContainer}>
-              <div style={styles.errorIcon}>⚠️</div>
               <h2 style={styles.errorTitle}>Error Loading Third-Party APIs</h2>
               <p style={styles.errorText}>{error}</p>
               <button
                 className="api-retry-button"
                 style={styles.retryButton}
-                onClick={fetchThirdPartyAPIs}
+                onClick={() => window.location.reload()}
               >
                 Try Again
               </button>
@@ -96,7 +177,7 @@ export default function ThirdPartyAPI() {
     );
   }
 
-  // Empty State
+  // Empty state - no APIs needed
   if (isEmpty) {
     return (
       <>
@@ -104,18 +185,18 @@ export default function ThirdPartyAPI() {
         <div style={styles.appContainer}>
           <div style={styles.mainContentContainer}>
             <div style={styles.emptyContainer}>
-              <div style={styles.emptyIcon}>✅</div>
+              <div style={styles.emptyIcon}>
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
               <h2 style={styles.emptyTitle}>No Third-Party APIs Needed</h2>
               <p style={styles.emptyText}>
                 Based on the PRD analysis, your project doesn't require any external third-party API integrations.
               </p>
-              <button
-                className="api-retry-button"
-                style={styles.retryButton}
-                onClick={fetchThirdPartyAPIs}
-              >
-                Refresh Analysis
-              </button>
+              <p style={styles.emptyHint}>
+                You can proceed to the next step in your project setup.
+              </p>
             </div>
           </div>
         </div>
@@ -123,162 +204,127 @@ export default function ThirdPartyAPI() {
     );
   }
 
-  // Main Content with APIs
   return (
     <>
       <style>{styles.cssStyles}</style>
       <div style={styles.appContainer}>
-        {/* Header */}
-        <div style={styles.headerContainer}>
-          <div style={styles.headerContent}>
-            <h1 style={styles.mainTitle}>Third-Party API Integration</h1>
-            <p style={styles.subtitle}>
-              External APIs identified from your PRD requirements
-            </p>
-          </div>
-          <button
-            className="api-refresh-button"
-            style={styles.refreshButton}
-            onClick={fetchThirdPartyAPIs}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-            </svg>
-            Refresh
-          </button>
-        </div>
-
-        {/* Summary Card */}
-        {apiList.length > 0 && (
-          <div className="fade-in-up" style={styles.summaryCard}>
-            <div style={styles.summaryContent}>
-              <div style={styles.summaryIcon}>🔌</div>
-              <div style={styles.summaryText}>
-                <h3 style={styles.summaryTitle}>
-                  Found {apiList.length} Third-Party API{apiList.length !== 1 ? 's' : ''}
-                </h3>
-                <p style={styles.summaryDescription}>
-                  These external services have been identified as necessary for your project
+        <div style={styles.mainContentContainer}>
+          <div style={styles.contentWrapper}>
+            <main style={styles.mainSection}>
+              {/* Header Section */}
+              <div style={styles.headerSection}>
+                <h1 style={styles.pageTitle}>Select Third-Party APIs</h1>
+                <p style={styles.pageSubtitle}>
+                  We've identified {apis.length} third-party API integration{apis.length !== 1 ? 's' : ''} from your PRD. Select the APIs you want to integrate into your application.
                 </p>
               </div>
-            </div>
+
+              {/* APIs Grid */}
+              <div style={styles.apisGrid}>
+                {apis.map((api, index) => {
+                  const isSelected = selectedApis.includes(api.id);
+                  return (
+                    <ApiCard
+                      key={api.id}
+                      api={api}
+                      isSelected={isSelected}
+                      onSelect={handleApiSelect}
+                      index={index}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Action Footer */}
+              <div style={styles.actionFooter}>
+                <div style={styles.selectionInfo}>
+                  <span style={styles.selectionCount}>
+                    {selectedApis.length} of {apis.length} selected
+                  </span>
+                  {selectedApis.length > 0 && (
+                    <span style={styles.selectionHint}>
+                      Selected APIs will be integrated into your project
+                    </span>
+                  )}
+                </div>
+                <button
+                  className="api-continue-button"
+                  style={{
+                    ...styles.continueButton,
+                    ...(selectedApis.length === 0 || isUploading ? styles.continueButtonDisabled : {})
+                  }}
+                  onClick={handleContinue}
+                  disabled={selectedApis.length === 0 || isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <div className="api-spinner" style={{...styles.spinner, marginBottom: 0, width: '18px', height: '18px', borderWidth: '2px'}}></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Continue</span>
+                      <ArrowRightIcon />
+                    </>
+                  )}
+                </button>
+              </div>
+            </main>
           </div>
-        )}
-
-        {/* API Cards Grid */}
-        <div style={styles.cardsGrid}>
-          {apiList.map((api, index) => (
-            <div 
-              key={index}
-              className="api-card fade-in-up"
-              style={{...styles.apiCard, animationDelay: `${index * 0.1}s`}}
-            >
-              {/* Card Header */}
-              <div style={styles.cardHeader}>
-                <div style={styles.cardHeaderLeft}>
-                  <div style={styles.iconContainer}>
-                    <span style={styles.categoryIcon}>{getAPIIcon(api.category)}</span>
-                  </div>
-                  <div>
-                    <h3 style={styles.apiName}>{api.name || 'Unnamed API'}</h3>
-                    {api.category && (
-                      <span style={styles.categoryBadge}>{api.category}</span>
-                    )}
-                  </div>
-                </div>
-                {api.required && (
-                  <span style={styles.requiredBadge}>Required</span>
-                )}
-              </div>
-
-              {/* Description */}
-              {api.description && (
-                <p style={styles.apiDescription}>{api.description}</p>
-              )}
-
-              {/* Purpose */}
-              {api.purpose && (
-                <div style={styles.sectionBlock}>
-                  <h4 style={styles.sectionLabel}>Purpose</h4>
-                  <p style={styles.sectionText}>{api.purpose}</p>
-                </div>
-              )}
-
-              {/* Features */}
-              {api.features && api.features.length > 0 && (
-                <div style={styles.sectionBlock}>
-                  <h4 style={styles.sectionLabel}>Key Features</h4>
-                  <ul style={styles.featureList}>
-                    {api.features.map((feature, idx) => (
-                      <li key={idx} style={styles.featureItem}>
-                        <span style={styles.featureBullet}>•</span>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Endpoints */}
-              {api.endpoints && api.endpoints.length > 0 && (
-                <div style={styles.sectionBlock}>
-                  <h4 style={styles.sectionLabel}>API Endpoints</h4>
-                  <div style={styles.endpointsContainer}>
-                    {api.endpoints.map((endpoint, idx) => (
-                      <code key={idx} style={styles.endpointCode}>
-                        {endpoint}
-                      </code>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Footer */}
-              <div style={styles.cardFooter}>
-                {api.provider && (
-                  <div style={styles.providerInfo}>
-                    <span style={styles.providerLabel}>Provider:</span>
-                    <span style={styles.providerName}>{api.provider}</span>
-                  </div>
-                )}
-                {api.documentation && (
-                  <a 
-                    href={api.documentation} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="api-docs-link"
-                    style={styles.docsLink}
-                  >
-                    View Docs
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>
-                    </svg>
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
         </div>
-
-        {/* Raw JSON Debug */}
-        {thirdPartyData && (
-          <details style={styles.debugSection}>
-            <summary style={styles.debugSummary}>View Raw JSON (Debug)</summary>
-            <pre style={styles.debugPre}>
-              {JSON.stringify(thirdPartyData, null, 2)}
-            </pre>
-          </details>
-        )}
       </div>
     </>
   );
 }
 
-// Styles object matching the design system
+// API Card Component - Apple minimalist design
+const ApiCard = ({ api, isSelected, onSelect }) => {
+  return (
+    <div
+      className="api-card"
+      style={{
+        ...styles.apiCard,
+        ...(isSelected ? styles.apiCardSelected : {})
+      }}
+      onClick={() => onSelect(api.id)}
+    >
+      {/* Selection Indicator - Minimal */}
+      <div style={{
+        ...styles.selectionIndicator,
+        ...(isSelected ? styles.selectionIndicatorSelected : {})
+      }}>
+        {isSelected && <CheckIcon />}
+      </div>
+
+      {/* API Name - Prominent */}
+      <h3 style={styles.apiName}>{api.name || 'Unnamed API'}</h3>
+
+      {/* Description - Single line */}
+      <p style={styles.apiDescription}>
+        {api.description}
+      </p>
+    </div>
+  );
+};
+
+// SVG Icons
+const ArrowRightIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 9H15M15 9L10 4M15 9L10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 9L7 13L15 5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+// Styles object matching UserPersona
 const styles = {
   cssStyles: `
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
-
+    
     body {
       margin: 0;
       font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -286,7 +332,8 @@ const styles = {
       -moz-osx-font-smoothing: grayscale;
     }
 
-    @keyframes fadeInUp {
+    /* Animations */
+    @keyframes apiFadeIn {
       from {
         opacity: 0;
         transform: translateY(16px);
@@ -297,70 +344,304 @@ const styles = {
       }
     }
 
-    .fade-in-up {
-      animation: fadeInUp 0.6s ease-out;
+    @keyframes apiCardAppear {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes apiSpin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
-    .api-spinner {
-      animation: spin 1s linear infinite;
-    }
-
+    /* Card Hover Effects */
     .api-card {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: apiCardAppear 0.5s ease-out backwards;
     }
+
+    .api-card:nth-child(1) { animation-delay: 0.05s; }
+    .api-card:nth-child(2) { animation-delay: 0.1s; }
+    .api-card:nth-child(3) { animation-delay: 0.15s; }
+    .api-card:nth-child(4) { animation-delay: 0.2s; }
+    .api-card:nth-child(5) { animation-delay: 0.25s; }
+    .api-card:nth-child(6) { animation-delay: 0.3s; }
+    .api-card:nth-child(7) { animation-delay: 0.35s; }
 
     .api-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(209, 96, 33, 0.4) !important;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
-    .api-refresh-button {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .api-refresh-button:hover {
-      background: rgba(209, 96, 33, 0.15);
-      border-color: rgba(209, 96, 33, 0.4);
+    .api-card:active {
       transform: translateY(-1px);
     }
 
-    .api-retry-button {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Continue Button Hover */
+    .api-continue-button:hover {
+      background: linear-gradient(135deg, #e87332 0%, #f28a4a 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(208, 93, 29, 0.5);
     }
 
+    .api-continue-button:active {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(208, 93, 29, 0.4);
+    }
+
+    .api-continue-button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Selected Overlay */
+    .api-selected-overlay {
+      animation: apiFadeOverlay 0.25s ease-out;
+    }
+
+    @keyframes apiFadeOverlay {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Spinner Animation */
+    .api-spinner {
+      animation: apiSpin 0.8s linear infinite;
+    }
+
+    /* Retry Button Hover */
     .api-retry-button:hover {
       background: linear-gradient(135deg, #e87332 0%, #f28a4a 100%);
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(232, 115, 50, 0.35);
+      box-shadow: 0 8px 24px rgba(208, 93, 29, 0.5);
     }
 
-    .api-docs-link {
-      transition: all 0.2s ease;
-    }
-
-    .api-docs-link:hover {
-      color: #f28a4a !important;
-      transform: translateX(2px);
+    .api-retry-button:active {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(208, 93, 29, 0.4);
     }
   `,
 
   appContainer: {
-    minHeight: '100vh',
-    background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0a0a0a 100%)',
-    padding: '48px 32px',
-    color: '#f9fafb',
+    backgroundColor: 'transparent',
+    color: '#ffffff',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
   },
 
   mainContentContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    overflowY: 'auto',
+    backgroundColor: '#101010',
+    padding: '48px 40px',
+    minHeight: '100vh',
+  },
+
+  contentWrapper: {
+    width: '100%',
+    maxWidth: '1200px',
+    animation: 'apiFadeIn 0.8s ease-out',
+  },
+
+  mainSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '40px',
+  },
+
+  // Header Section - More breathing space
+  headerSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    marginBottom: '16px',
+  },
+
+  pageTitle: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontWeight: '500',
+    fontSize: '32px',
+    color: '#ffffff',
+    margin: 0,
+    letterSpacing: '-0.5px',
+    lineHeight: '1.2',
+  },
+
+  pageSubtitle: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontWeight: '400',
+    fontSize: '15px',
+    color: 'rgba(255, 255, 255, 0.5)',
+    margin: 0,
+    letterSpacing: '-0.2px',
+    lineHeight: '1.6',
+    maxWidth: '700px',
+  },
+
+  // APIs Grid - More breathing space
+  apisGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+    gap: '16px',
+    marginBottom: '24px',
+  },
+
+  // API Card - Minimal Apple design
+  apiCard: {
+    position: 'relative',
+    background: 'rgba(255, 255, 255, 0.01)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '0.5px solid rgba(255, 255, 255, 0.04)',
+    borderRadius: '12px',
+    padding: '20px 18px',
+    cursor: 'pointer',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    minHeight: '110px',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+    overflow: 'hidden',
+  },
+
+  apiCardSelected: {
+    background: 'rgba(232, 115, 50, 0.02)',
+    border: '1px solid rgba(232, 115, 50, 0.4)',
+    boxShadow: '0 0 0 1px rgba(232, 115, 50, 0.1)',
+  },
+
+  selectedOverlay: {
+    position: 'absolute',
+    inset: 0,
+    background: 'transparent',
+    pointerEvents: 'none',
+    zIndex: 0,
+  },
+
+  // Selection Indicator - Minimal
+  selectionIndicator: {
+    position: 'absolute',
+    top: '16px',
+    right: '16px',
+    width: '20px',
+    height: '20px',
+    borderRadius: '50%',
+    border: '1.5px solid rgba(255, 255, 255, 0.15)',
+    background: 'transparent',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 'calc(100vh - 96px)',
+    transition: 'all 0.25s ease',
+    zIndex: 2,
+  },
+
+  selectionIndicatorSelected: {
+    background: '#e87332',
+    border: 'none',
+    color: '#ffffff',
+  },
+
+  apiName: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '15px',
+    fontWeight: '500',
+    color: '#ffffff',
+    margin: 0,
+    letterSpacing: '-0.2px',
+    lineHeight: '1.4',
+    position: 'relative',
+    zIndex: 1,
+  },
+
+  apiDescription: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '12px',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.5)',
+    margin: 0,
+    letterSpacing: '-0.1px',
+    lineHeight: '1.5',
+    position: 'relative',
+    zIndex: 1,
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+  },
+
+  // Action Footer - Clean and minimal
+  actionFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: '24px',
+    marginTop: '8px',
+    borderTop: '0.5px solid rgba(255, 255, 255, 0.05)',
+  },
+
+  selectionInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+
+  selectionCount: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '14px',
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.9)',
+    letterSpacing: '-0.2px',
+  },
+
+  selectionHint: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '11px',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.4)',
+    letterSpacing: '-0.1px',
+  },
+
+  continueButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '12px 28px',
+    background: 'linear-gradient(135deg, #d05d1d 0%, #e87332 100%)',
+    border: 'none',
+    borderRadius: '10px',
+    color: '#ffffff',
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '14px',
+    fontWeight: '500',
+    letterSpacing: '-0.2px',
+    cursor: 'pointer',
+    transition: 'all 0.25s ease',
+    boxShadow: '0 2px 8px rgba(208, 93, 29, 0.3)',
+  },
+
+  continueButtonDisabled: {
+    opacity: 0.35,
+    cursor: 'not-allowed',
   },
 
   // Loading State
@@ -368,21 +649,27 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '24px',
+    justifyContent: 'center',
+    padding: '120px 20px',
   },
 
   spinner: {
     width: '48px',
     height: '48px',
-    border: '3px solid rgba(255, 255, 255, 0.1)',
-    borderTop: '3px solid #D16021',
+    border: '3px solid rgba(255, 255, 255, 0.08)',
+    borderTopColor: '#e87332',
     borderRadius: '50%',
+    marginBottom: '28px',
   },
 
   loadingText: {
-    fontSize: '16px',
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: '400',
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '15px',
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.7)',
+    letterSpacing: '-0.2px',
+    textAlign: 'center',
+    margin: 0,
   },
 
   // Error State
@@ -390,39 +677,46 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '20px',
+    justifyContent: 'center',
+    padding: '80px 20px',
     textAlign: 'center',
-    maxWidth: '500px',
-  },
-
-  errorIcon: {
-    fontSize: '64px',
   },
 
   errorTitle: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
     fontSize: '28px',
     fontWeight: '600',
-    color: '#f9fafb',
-    margin: '0',
+    color: '#ffffff',
+    margin: '0 0 16px 0',
+    letterSpacing: '-0.4px',
   },
 
   errorText: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
     fontSize: '16px',
-    color: 'rgba(255, 255, 255, 0.6)',
-    margin: '0',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.65)',
+    margin: '0 0 32px 0',
+    maxWidth: '500px',
     lineHeight: '1.6',
   },
 
   retryButton: {
-    padding: '14px 32px',
-    background: 'linear-gradient(135deg, #D16021 0%, #e87332 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '14px 36px',
+    background: 'linear-gradient(135deg, #d05d1d 0%, #e87332 100%)',
     border: 'none',
-    borderRadius: '10px',
-    color: 'white',
+    borderRadius: '12px',
+    color: '#ffffff',
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
     fontSize: '15px',
     fontWeight: '600',
+    letterSpacing: '-0.3px',
     cursor: 'pointer',
-    fontFamily: "'Montserrat', sans-serif",
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: '0 4px 16px rgba(208, 93, 29, 0.4)',
   },
 
   // Empty State
@@ -430,300 +724,52 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '20px',
+    justifyContent: 'center',
+    padding: '80px 20px',
     textAlign: 'center',
-    maxWidth: '500px',
   },
 
   emptyIcon: {
-    fontSize: '64px',
-  },
-
-  emptyTitle: {
-    fontSize: '28px',
-    fontWeight: '600',
-    color: '#f9fafb',
-    margin: '0',
-  },
-
-  emptyText: {
-    fontSize: '16px',
-    color: 'rgba(255, 255, 255, 0.6)',
-    margin: '0',
-    lineHeight: '1.6',
-  },
-
-  // Header
-  headerContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '40px',
-    flexWrap: 'wrap',
-    gap: '20px',
-  },
-
-  headerContent: {
-    flex: '1',
-  },
-
-  mainTitle: {
-    fontSize: '36px',
-    fontWeight: '700',
-    color: '#f9fafb',
-    margin: '0 0 8px 0',
-    letterSpacing: '-0.5px',
-  },
-
-  subtitle: {
-    fontSize: '16px',
-    color: 'rgba(255, 255, 255, 0.5)',
-    margin: '0',
-  },
-
-  refreshButton: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '12px 24px',
-    background: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '10px',
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    fontFamily: "'Montserrat', sans-serif",
-  },
-
-  // Summary Card
-  summaryCard: {
-    background: 'rgba(209, 96, 33, 0.08)',
-    border: '1px solid rgba(209, 96, 33, 0.2)',
-    borderRadius: '16px',
-    padding: '24px',
-    marginBottom: '32px',
-  },
-
-  summaryContent: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '16px',
-  },
-
-  summaryIcon: {
-    fontSize: '32px',
-  },
-
-  summaryText: {
-    flex: '1',
-  },
-
-  summaryTitle: {
-    fontSize: '20px',
-    fontWeight: '600',
-    color: '#f9fafb',
-    margin: '0 0 8px 0',
-  },
-
-  summaryDescription: {
-    fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.6)',
-    margin: '0',
-  },
-
-  // Cards Grid
-  cardsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 500px), 1fr))',
-    gap: '24px',
-    marginBottom: '40px',
-  },
-
-  // API Card
-  apiCard: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '20px',
     background: 'rgba(255, 255, 255, 0.03)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '16px',
-    padding: '24px',
-  },
-
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '16px',
-  },
-
-  cardHeaderLeft: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '12px',
-    flex: '1',
-  },
-
-  iconContainer: {
-    width: '48px',
-    height: '48px',
-    background: 'rgba(209, 96, 33, 0.1)',
-    borderRadius: '12px',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '0.5px solid rgba(255, 255, 255, 0.06)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    color: 'rgba(232, 115, 50, 0.6)',
+    marginBottom: '32px',
   },
 
-  categoryIcon: {
-    fontSize: '24px',
-  },
-
-  apiName: {
-    fontSize: '20px',
+  emptyTitle: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '28px',
     fontWeight: '600',
-    color: '#f9fafb',
-    margin: '0 0 4px 0',
+    color: '#ffffff',
+    margin: '0 0 16px 0',
+    letterSpacing: '-0.4px',
   },
 
-  categoryBadge: {
-    fontSize: '12px',
-    color: 'rgba(255, 255, 255, 0.5)',
-    textTransform: 'capitalize',
-  },
-
-  requiredBadge: {
-    padding: '6px 12px',
-    background: 'rgba(239, 68, 68, 0.15)',
-    color: '#f87171',
-    fontSize: '11px',
-    fontWeight: '600',
-    borderRadius: '6px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-
-  apiDescription: {
-    fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.7)',
+  emptyText: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: '16px',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.65)',
+    margin: '0 0 12px 0',
+    maxWidth: '500px',
     lineHeight: '1.6',
-    marginBottom: '16px',
   },
 
-  sectionBlock: {
-    marginBottom: '16px',
-  },
-
-  sectionLabel: {
-    fontSize: '12px',
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.5)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    marginBottom: '8px',
-  },
-
-  sectionText: {
+  emptyHint: {
+    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
     fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.7)',
-    lineHeight: '1.6',
-    margin: '0',
-  },
-
-  featureList: {
-    listStyle: 'none',
-    padding: '0',
-    margin: '0',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-  },
-
-  featureItem: {
-    fontSize: '13px',
-    color: 'rgba(255, 255, 255, 0.7)',
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '8px',
-  },
-
-  featureBullet: {
-    color: '#D16021',
-    fontWeight: '700',
-  },
-
-  endpointsContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-  },
-
-  endpointCode: {
-    display: 'block',
-    fontSize: '11px',
-    background: 'rgba(0, 0, 0, 0.3)',
-    padding: '8px 12px',
-    borderRadius: '6px',
-    color: '#D16021',
-    fontFamily: "'Monaco', 'Menlo', monospace",
-    overflow: 'auto',
-  },
-
-  cardFooter: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: '16px',
-    paddingTop: '16px',
-    borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-    flexWrap: 'wrap',
-    gap: '12px',
-  },
-
-  providerInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-
-  providerLabel: {
-    fontSize: '12px',
-    color: 'rgba(255, 255, 255, 0.4)',
-  },
-
-  providerName: {
-    fontSize: '13px',
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '500',
-  },
-
-  docsLink: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    fontSize: '13px',
-    color: '#D16021',
-    textDecoration: 'none',
-    fontWeight: '500',
-  },
-
-  // Debug Section
-  debugSection: {
-    marginTop: '40px',
-  },
-
-  debugSummary: {
-    fontSize: '13px',
-    color: 'rgba(255, 255, 255, 0.4)',
-    cursor: 'pointer',
-    marginBottom: '12px',
-  },
-
-  debugPre: {
-    background: 'rgba(0, 0, 0, 0.4)',
-    padding: '20px',
-    borderRadius: '12px',
-    fontSize: '11px',
-    color: 'rgba(255, 255, 255, 0.6)',
-    overflowX: 'auto',
-    fontFamily: "'Monaco', 'Menlo', monospace",
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.5)',
+    margin: 0,
+    maxWidth: '450px',
+    lineHeight: '1.5',
   },
 };
-

@@ -573,113 +573,55 @@ async def get_thirdparty(
     # Example 1: Return empty when no third-party APIs needed
     # return {}
     
-    # Example 2: Return list of third-party APIs
+    # Example 2: Return list of third-party APIs (generic categories, not specific providers)
     mock_third_party_apis = {
         "apis": [
             {
-                "name": "Stripe",
+                "name": "Payment Processing",
                 "category": "payment",
-                "provider": "Stripe Inc.",
-                "description": "Payment processing and subscription management",
-                "purpose": "Handle secure payments, subscriptions, and invoicing",
-                "required": True,
-                "features": [
-                    "Credit card processing",
-                    "Subscription billing",
-                    "Invoice generation",
-                    "Payment webhooks"
-                ],
-                "endpoints": [
-                    "POST /v1/payment_intents",
-                    "POST /v1/customers",
-                    "POST /v1/subscriptions"
-                ],
-                "documentation": "https://stripe.com/docs/api"
+                "description": "Secure payment gateway for processing transactions, subscriptions, and refunds",
+                "purpose": "Your application requires payment processing capabilities for handling customer transactions, managing subscriptions, and processing refunds securely"
             },
             {
-                "name": "Google Maps",
+                "name": "Maps & Location Services",
                 "category": "maps",
-                "provider": "Google",
-                "description": "Location services and mapping",
-                "purpose": "Provide location search, geocoding, and map visualization",
-                "required": True,
-                "features": [
-                    "Geocoding",
-                    "Place search",
-                    "Distance matrix",
-                    "Static maps"
-                ],
-                "endpoints": [
-                    "GET /maps/api/geocode/json",
-                    "GET /maps/api/place/nearbysearch/json",
-                    "GET /maps/api/distancematrix/json"
-                ],
-                "documentation": "https://developers.google.com/maps/documentation"
+                "description": "Geolocation and mapping services for address lookup and route planning",
+                "purpose": "Based on your PRD, the application needs location-based features including address search, geocoding, distance calculations, and interactive maps"
             },
             {
-                "name": "Auth0",
+                "name": "Authentication & Authorization",
                 "category": "oauth",
-                "provider": "Auth0",
-                "description": "Authentication and authorization platform",
-                "purpose": "Manage user authentication with OAuth 2.0 and social login",
-                "required": False,
-                "features": [
-                    "Social login (Google, Facebook, etc.)",
-                    "Multi-factor authentication",
-                    "Single sign-on",
-                    "User management"
-                ],
-                "endpoints": [
-                    "POST /oauth/token",
-                    "GET /userinfo",
-                    "POST /dbconnections/signup"
-                ],
-                "documentation": "https://auth0.com/docs/api"
+                "description": "Social login and identity management platform",
+                "purpose": "To simplify user onboarding and provide secure authentication, your app needs OAuth integration for social login and SSO capabilities"
             },
             {
-                "name": "Twilio",
+                "name": "SMS & Messaging",
                 "category": "sms",
-                "provider": "Twilio",
-                "description": "SMS and communication services",
-                "purpose": "Send SMS notifications and verification codes",
-                "required": False,
-                "features": [
-                    "SMS messaging",
-                    "Phone verification",
-                    "Two-factor authentication",
-                    "Delivery tracking"
-                ],
-                "endpoints": [
-                    "POST /2010-04-01/Accounts/{AccountSid}/Messages.json",
-                    "GET /2010-04-01/Accounts/{AccountSid}/Messages/{MessageSid}.json"
-                ],
-                "documentation": "https://www.twilio.com/docs/sms"
+                "description": "SMS notification and verification services",
+                "purpose": "Your application requires SMS capabilities for sending verification codes, transactional alerts, and notifications to users"
             },
             {
-                "name": "SendGrid",
+                "name": "Email Services",
                 "category": "email",
-                "provider": "Twilio SendGrid",
-                "description": "Email delivery and marketing platform",
-                "purpose": "Send transactional and marketing emails",
-                "required": True,
-                "features": [
-                    "Transactional emails",
-                    "Email templates",
-                    "Email analytics",
-                    "Bounce handling"
-                ],
-                "endpoints": [
-                    "POST /v3/mail/send",
-                    "GET /v3/stats"
-                ],
-                "documentation": "https://docs.sendgrid.com/api-reference"
+                "description": "Transactional and marketing email delivery platform",
+                "purpose": "For sending user notifications, password resets, promotional emails, and transactional communications reliably at scale"
+            },
+            {
+                "name": "Cloud Storage",
+                "category": "storage",
+                "description": "Scalable object storage for files and media",
+                "purpose": "Your application needs to store and serve user-generated content, images, documents, and media files securely and efficiently"
+            },
+            {
+                "name": "Push Notifications",
+                "category": "messaging",
+                "description": "Mobile and web push notification services",
+                "purpose": "To engage users with timely updates and alerts, your app requires push notification capabilities across mobile and web platforms"
             }
         ],
         "summary": {
-            "total": 5,
-            "required": 3,
-            "optional": 2,
-            "categories": ["payment", "maps", "oauth", "sms", "email"]
+            "total": 7,
+            "categories": ["payment", "maps", "oauth", "sms", "email", "storage", "messaging"]
         },
         "analyzed_at": datetime.now().isoformat(),
         "prd_version": "1.0.0"
@@ -691,6 +633,267 @@ async def get_thirdparty(
     # return {}
     
     return mock_third_party_apis
+
+
+class ThirdPartyApisUploadRequest(BaseModel):
+    selected_apis: list
+    user_id: Optional[str] = None
+    project_id: Optional[str] = None
+
+
+@app.post("/api/upload_thirdparty")
+async def upload_thirdparty(
+    request: ThirdPartyApisUploadRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Mock endpoint for uploading selected third-party APIs
+    
+    Accepts:
+    - selected_apis: List of selected API objects
+    - user_id: ID of the user (optional)
+    - project_id: ID of the project (optional)
+    
+    Headers:
+    - Authorization: Bearer token (automatically sent by frontend)
+    
+    Returns:
+    - success: Boolean indicating if upload was successful
+    - message: Human-readable message
+    - data: Saved APIs data
+    """
+    
+    # Extract token from Authorization header
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+    
+    # Log the incoming request for debugging
+    print(f"\n📤 Upload Third-Party APIs Request:")
+    print(f"   🔑 Token: {token[:20] + '...' if token else 'None'}")
+    print(f"   👤 User ID: {request.user_id}")
+    print(f"   📁 Project ID: {request.project_id}")
+    print(f"   🔌 Selected APIs Count: {len(request.selected_apis)}")
+    print(f"   📋 APIs: {[api.get('name', 'Unknown') for api in request.selected_apis]}\n")
+    
+    # Validate that at least one API is selected
+    if not request.selected_apis or len(request.selected_apis) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one API must be selected"
+        )
+    
+    # Provider recommendations based on API categories
+    provider_recommendations = {
+        "payment": [
+            {"name": "Stripe", "description": "Complete payment platform", "popularity": "Most Popular", "pricing": "2.9% + 30¢ per transaction"},
+            {"name": "PayPal", "description": "Widely trusted payment solution", "popularity": "Popular", "pricing": "2.9% + 30¢ per transaction"},
+            {"name": "Square", "description": "Point of sale and payments", "popularity": "Growing", "pricing": "2.6% + 10¢ per transaction"},
+            {"name": "Razorpay", "description": "Payment gateway for India", "popularity": "Regional", "pricing": "2% per transaction"}
+        ],
+        "maps": [
+            {"name": "Google Maps", "description": "Comprehensive mapping platform", "popularity": "Most Popular", "pricing": "$7 per 1000 requests"},
+            {"name": "Mapbox", "description": "Customizable maps", "popularity": "Popular", "pricing": "$5 per 1000 requests"},
+            {"name": "OpenStreetMap", "description": "Open source mapping", "popularity": "Free", "pricing": "Free"},
+            {"name": "Here Maps", "description": "Enterprise mapping solution", "popularity": "Enterprise", "pricing": "Custom pricing"}
+        ],
+        "oauth": [
+            {"name": "Auth0", "description": "Universal authentication platform", "popularity": "Most Popular", "pricing": "Free up to 7000 users"},
+            {"name": "Firebase Auth", "description": "Google's authentication service", "popularity": "Popular", "pricing": "Free tier available"},
+            {"name": "Okta", "description": "Enterprise identity management", "popularity": "Enterprise", "pricing": "Starting at $5/user/month"},
+            {"name": "AWS Cognito", "description": "Scalable user directory", "popularity": "Enterprise", "pricing": "Pay per active user"}
+        ],
+        "sms": [
+            {"name": "Twilio", "description": "Programmable SMS platform", "popularity": "Most Popular", "pricing": "$0.0079 per SMS"},
+            {"name": "AWS SNS", "description": "Amazon's notification service", "popularity": "Popular", "pricing": "$0.00645 per SMS"},
+            {"name": "Vonage", "description": "Global SMS API", "popularity": "Growing", "pricing": "Starting at $0.0084 per SMS"},
+            {"name": "MessageBird", "description": "Multi-channel messaging", "popularity": "Growing", "pricing": "Starting at $0.0081 per SMS"}
+        ],
+        "email": [
+            {"name": "SendGrid", "description": "Email delivery platform", "popularity": "Most Popular", "pricing": "Free up to 100 emails/day"},
+            {"name": "Mailgun", "description": "Email API for developers", "popularity": "Popular", "pricing": "Pay as you go"},
+            {"name": "AWS SES", "description": "Amazon's email service", "popularity": "Cost-effective", "pricing": "$0.10 per 1000 emails"},
+            {"name": "Postmark", "description": "Transactional email", "popularity": "Premium", "pricing": "$15 per 10,000 emails"}
+        ],
+        "storage": [
+            {"name": "AWS S3", "description": "Scalable object storage", "popularity": "Most Popular", "pricing": "$0.023 per GB/month"},
+            {"name": "Google Cloud Storage", "description": "Google's storage solution", "popularity": "Popular", "pricing": "$0.020 per GB/month"},
+            {"name": "Azure Blob Storage", "description": "Microsoft's cloud storage", "popularity": "Enterprise", "pricing": "$0.018 per GB/month"},
+            {"name": "Cloudinary", "description": "Media management platform", "popularity": "Media-focused", "pricing": "Free tier available"}
+        ],
+        "messaging": [
+            {"name": "Firebase Cloud Messaging", "description": "Google's push notifications", "popularity": "Most Popular", "pricing": "Free"},
+            {"name": "OneSignal", "description": "Multi-platform notifications", "popularity": "Popular", "pricing": "Free tier available"},
+            {"name": "Pusher", "description": "Real-time messaging", "popularity": "Developer-friendly", "pricing": "Free up to 100 connections"},
+            {"name": "Amazon SNS", "description": "AWS notification service", "popularity": "Enterprise", "pricing": "Pay per notification"}
+        ]
+    }
+    
+    # Build recommendations for selected APIs
+    recommendations = []
+    for api in request.selected_apis:
+        category = api.get('category', '').lower()
+        if category in provider_recommendations:
+            recommendations.append({
+                "api_category": api.get('name'),
+                "category": category,
+                "description": api.get('description'),
+                "providers": provider_recommendations[category]
+            })
+    
+    # Mock response data
+    response_data = {
+        "apis_saved": request.selected_apis,
+        "provider_recommendations": recommendations,
+        "count": len(request.selected_apis),
+        "user_id": request.user_id,
+        "project_id": request.project_id,
+        "saved_at": datetime.now().isoformat(),
+        "next_step": "select_specific_providers"
+    }
+    
+    print("   ✅ Third-party APIs saved successfully")
+    print(f"   📋 Returning {len(recommendations)} provider recommendations")
+    
+    return {
+        "success": True,
+        "message": f"Successfully saved {len(request.selected_apis)} third-party API(s)",
+        "data": response_data
+    }
+
+
+class ThirdPartyProvidersUploadRequest(BaseModel):
+    selected_providers: dict
+    user_id: Optional[str] = None
+    project_id: Optional[str] = None
+
+
+@app.post("/api/upload_thirdprovider")
+async def upload_thirdprovider(
+    request: ThirdPartyProvidersUploadRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Mock endpoint for uploading selected third-party providers
+    
+    Accepts:
+    - selected_providers: Dictionary with category as key and provider name as value
+      Example: {"payment": "Stripe", "maps": "Google Maps"}
+    - user_id: ID of the user (optional)
+    - project_id: ID of the project (optional)
+    
+    Headers:
+    - Authorization: Bearer token (automatically sent by frontend)
+    
+    Returns:
+    - success: Boolean indicating if upload was successful
+    - message: Human-readable message
+    - data: Saved providers data with API key requirements
+    """
+    
+    # Extract token from Authorization header
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+    
+    # Log the incoming request for debugging
+    print(f"\n📤 Upload Third-Party Providers Request:")
+    print(f"   🔑 Token: {token[:20] + '...' if token else 'None'}")
+    print(f"   👤 User ID: {request.user_id}")
+    print(f"   📁 Project ID: {request.project_id}")
+    print(f"   🔌 Selected Providers Count: {len(request.selected_providers)}")
+    print(f"   📋 Providers: {request.selected_providers}\n")
+    
+    # Validate that at least one provider is selected
+    if not request.selected_providers or len(request.selected_providers) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one provider must be selected"
+        )
+    
+    # Generate API key requirements for each selected provider
+    api_key_requirements = []
+    for category, provider_name in request.selected_providers.items():
+        # Define what keys each provider needs
+        key_info = {
+            "category": category,
+            "provider": provider_name,
+            "keys_required": []
+        }
+        
+        # Provider-specific key requirements
+        if provider_name == "Stripe":
+            key_info["keys_required"] = [
+                {"name": "Publishable Key", "field": "stripe_publishable_key", "description": "Public key for client-side", "required": True},
+                {"name": "Secret Key", "field": "stripe_secret_key", "description": "Secret key for server-side", "required": True}
+            ]
+        elif provider_name == "PayPal":
+            key_info["keys_required"] = [
+                {"name": "Client ID", "field": "paypal_client_id", "description": "PayPal application client ID", "required": True},
+                {"name": "Client Secret", "field": "paypal_client_secret", "description": "PayPal application secret", "required": True}
+            ]
+        elif provider_name == "Google Maps":
+            key_info["keys_required"] = [
+                {"name": "API Key", "field": "google_maps_api_key", "description": "Google Maps API key", "required": True}
+            ]
+        elif provider_name == "Mapbox":
+            key_info["keys_required"] = [
+                {"name": "Access Token", "field": "mapbox_access_token", "description": "Mapbox public access token", "required": True}
+            ]
+        elif provider_name == "Auth0":
+            key_info["keys_required"] = [
+                {"name": "Domain", "field": "auth0_domain", "description": "Auth0 tenant domain", "required": True},
+                {"name": "Client ID", "field": "auth0_client_id", "description": "Application client ID", "required": True},
+                {"name": "Client Secret", "field": "auth0_client_secret", "description": "Application client secret", "required": True}
+            ]
+        elif provider_name == "Firebase Auth":
+            key_info["keys_required"] = [
+                {"name": "API Key", "field": "firebase_api_key", "description": "Firebase API key", "required": True},
+                {"name": "Project ID", "field": "firebase_project_id", "description": "Firebase project ID", "required": True}
+            ]
+        elif provider_name == "Twilio":
+            key_info["keys_required"] = [
+                {"name": "Account SID", "field": "twilio_account_sid", "description": "Twilio account SID", "required": True},
+                {"name": "Auth Token", "field": "twilio_auth_token", "description": "Twilio auth token", "required": True}
+            ]
+        elif provider_name == "SendGrid":
+            key_info["keys_required"] = [
+                {"name": "API Key", "field": "sendgrid_api_key", "description": "SendGrid API key", "required": True}
+            ]
+        elif provider_name == "AWS S3":
+            key_info["keys_required"] = [
+                {"name": "Access Key ID", "field": "aws_access_key_id", "description": "AWS access key ID", "required": True},
+                {"name": "Secret Access Key", "field": "aws_secret_access_key", "description": "AWS secret access key", "required": True},
+                {"name": "Region", "field": "aws_region", "description": "AWS region (e.g., us-east-1)", "required": True},
+                {"name": "Bucket Name", "field": "aws_bucket_name", "description": "S3 bucket name", "required": True}
+            ]
+        else:
+            # Generic API key for other providers
+            key_info["keys_required"] = [
+                {"name": "API Key", "field": f"{category}_api_key", "description": f"{provider_name} API key", "required": True}
+            ]
+        
+        api_key_requirements.append(key_info)
+    
+    # Mock response data
+    response_data = {
+        "providers_saved": request.selected_providers,
+        "count": len(request.selected_providers),
+        "api_key_requirements": api_key_requirements,
+        "user_id": request.user_id,
+        "project_id": request.project_id,
+        "saved_at": datetime.now().isoformat(),
+        "next_step": "enter_api_keys"
+    }
+    
+    print("   ✅ Third-party providers saved successfully")
+    print(f"   🔑 API keys required: {len(api_key_requirements)}")
+    
+    return {
+        "success": True,
+        "message": f"Successfully saved {len(request.selected_providers)} provider(s)",
+        "data": response_data
+    }
 
 
 if __name__ == "__main__":
@@ -708,6 +911,8 @@ if __name__ == "__main__":
     print("🎨 Get Brand Design: GET http://localhost:8000/api/get_branddesign")
     print("💾 Save Brand Design: POST http://localhost:8000/api/upload_branddesign")
     print("🔌 Get Third-Party APIs: GET http://localhost:8000/api/get_thirdparty")
+    print("💾 Save Third-Party APIs: POST http://localhost:8000/api/upload_thirdparty")
+    print("💾 Save Third-Party Providers: POST http://localhost:8000/api/upload_thirdprovider")
     print("=" * 60)
     print("\n⚡ Starting server...\n")
     

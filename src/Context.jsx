@@ -92,6 +92,8 @@ export const API_ENDPOINTS = {
   
   // Third Party APIs
   GET_THIRD_PARTY: '/api/get_thirdparty',
+  UPLOAD_THIRD_PARTY: '/api/upload_thirdparty',
+  UPLOAD_THIRD_PARTY_PROVIDERS: '/api/upload_thirdprovider',
   
   // Health Check
   HEALTH: '/api/v1/health',
